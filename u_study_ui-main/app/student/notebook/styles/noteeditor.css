@@ -1,0 +1,9 @@
+:where(.css-dev-only-do-not-override-2lxdis).ant-tree.ant-tree-directory
+	.ant-tree-treenode-selected::before {
+	border-radius: 5px;
+}
+
+.ql-toolbar.ql-snow,
+.ql-container.ql-snow {
+	border: none;
+}
