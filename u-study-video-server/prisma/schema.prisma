@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  description String
+  Course      Course[]
+}
+
+model Chapter {
+  id             Int     @id @default(autoincrement())
+  courseId       Int
+  title          String
+  sequenceNumber Int
+  Course         Course  @relation(fields: [courseId], references: [id])
+  Video          Video[]
+}
+
+model Comment {
+  id            Int       @id @default(autoincrement())
+  videoId       Int
+  userId        String
+  content       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime
+  parentId      Int?
+  Comment       Comment?  @relation("CommentToComment", fields: [parentId], references: [id])
+  other_Comment Comment[] @relation("CommentToComment")
+  User          User      @relation(fields: [userId], references: [uuid])
+  Video         Video     @relation(fields: [videoId], references: [id])
+}
+
+model Course {
+  id          Int          @id @default(autoincrement())
+  uuid        String
+  categoryId  Int
+  title       String
+  description String?
+  image       String?
+  price       Float
+  createdAt   DateTime     @default(now())
+  updateAt    DateTime
+  Chapter     Chapter[]
+  Category    Category     @relation(fields: [categoryId], references: [id])
+  User        User         @relation(fields: [uuid], references: [uuid])
+  Enrollment  Enrollment[]
+  Folders     Folders[]
+  Payment     Payment[]
+  Review      Review[]
+}
+
+model Enrollment {
+  uuid            String
+  courseId        Int
+  cancelled       Boolean  @default(false)
+  cencelledReason String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+  Course          Course   @relation(fields: [courseId], references: [id])
+
+  @@id([uuid, courseId])
+}
+
+model Payment {
+  courseId  Int
+  uuid      String
+  amount    Float
+  createdAt DateTime @default(now())
+  Course    Course   @relation(fields: [courseId], references: [id])
+  User      User     @relation(fields: [uuid], references: [uuid])
+
+  @@id([uuid, courseId])
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  courseId   Int
+  uuid       String
+  rating     Int
+  reviewText String
+  createdAt  DateTime @default(now())
+  updateAt   DateTime
+  Course     Course   @relation(fields: [courseId], references: [id])
+  User       User     @relation(fields: [uuid], references: [uuid])
+}
+
+model User {
+  uuid      String     @id
+  email     String     @unique
+  password  String
+  name      String?
+  createdAt DateTime   @default(now())
+  role      Role
+  updatedAt DateTime
+  Comment   Comment[]
+  Course    Course[]
+  Folders   Folders[]
+  Learning  Learning[]
+  Notes     Notes[]
+  Payment   Payment[]
+  Review    Review[]
+}
+
+model Video {
+  id             Int        @id @default(autoincrement())
+  chapterId      Int
+  title          String
+  url            String
+  duration       Int
+  sequenceNumber Int
+  hidden         Boolean    @default(false)
+  Comment        Comment[]
+  Learning       Learning[]
+  Notes          Notes[]
+  Chapter        Chapter    @relation(fields: [chapterId], references: [id])
+}
+
+model Folders {
+  id             Int       @id @default(autoincrement())
+  name           String    @default("Untitled")
+  parentFolderId Int?
+  uuid           String
+  courseId       Int?
+  Course         Course?   @relation(fields: [courseId], references: [id])
+  Folders        Folders?  @relation("FoldersToFolders", fields: [parentFolderId], references: [id])
+  other_Folders  Folders[] @relation("FoldersToFolders")
+  User           User      @relation(fields: [uuid], references: [uuid])
+  Notes          Notes[]
+}
+
+model Learning {
+  videoId     Int
+  uuid        String
+  timeLearned Int
+  completed   Boolean @default(false)
+  User        User    @relation(fields: [uuid], references: [uuid])
+  Video       Video   @relation(fields: [videoId], references: [id])
+
+  @@id([videoId, uuid])
+}
+
+model Notes {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  folderId  Int?
+  uuid      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  videoId   Int?
+  Folders   Folders? @relation(fields: [folderId], references: [id])
+  User      User     @relation(fields: [uuid], references: [uuid])
+  Video     Video?   @relation(fields: [videoId], references: [id])
+
+  @@unique([uuid, videoId])
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
